@@ -27,6 +27,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes
+  if (pathname.startsWith('/invite')) {
+    return supabaseResponse;
+  }
+
   if (pathname.startsWith('/login')) {
     if (user) {
       const { data: profile } = await supabase
@@ -46,26 +50,27 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // Fetch profile once for all guarded routes
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, is_active')
+    .eq('id', user.id)
+    .single();
+
+  // Block deactivated users
+  if (profile && profile.is_active === false) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(new URL('/login?deactivated=1', request.url));
+  }
+
   // Role-based routing for root
   if (pathname === '/') {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
     const destination = profile?.role === 'platform_admin' ? '/admin' : '/dashboard';
     return NextResponse.redirect(new URL(destination, request.url));
   }
 
   // Guard /admin routes — only platform_admin
   if (pathname.startsWith('/admin')) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
     if (profile?.role !== 'platform_admin') {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }

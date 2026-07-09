@@ -1,17 +1,21 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Cloud } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = getSupabaseBrowserClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const isActivated   = searchParams.get('activated') === '1';
+  const isDeactivated = searchParams.get('deactivated') === '1';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,6 +55,17 @@ export default function LoginPage() {
         {/* Form */}
         <div className="bg-card rounded-2xl border border-line p-8 shadow-sm">
           <h2 className="font-archivo font-600 text-lg text-ink mb-6">Iniciar sesión</h2>
+
+          {isActivated && (
+            <p className="text-sm text-ok bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-4">
+              ¡Cuenta activada! Ya podés ingresar con tu email y contraseña.
+            </p>
+          )}
+          {isDeactivated && (
+            <p className="text-sm text-bad bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">
+              Tu cuenta fue desactivada. Contactá al administrador.
+            </p>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -99,5 +114,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
