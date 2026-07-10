@@ -50,17 +50,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Fetch profile once for all guarded routes
+  // Fetch role (always exists). is_active is optional — added in migration 00003.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, is_active')
+    .select('role')
     .eq('id', user.id)
     .single();
 
-  // Block deactivated users
-  if (profile && profile.is_active === false) {
-    await supabase.auth.signOut();
-    return NextResponse.redirect(new URL('/login?deactivated=1', request.url));
+  // Block deactivated users (only once migration 00003 is applied)
+  try {
+    const { data: profileFull } = await supabase
+      .from('profiles')
+      .select('is_active')
+      .eq('id', user.id)
+      .single();
+    if (profileFull && (profileFull as { is_active?: boolean }).is_active === false) {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL('/login?deactivated=1', request.url));
+    }
+  } catch {
+    // is_active column not yet available — skip check
   }
 
   // Role-based routing for root
