@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { CloudChip } from '@/components/ui/CloudChip';
 import { fmt } from '@/lib/utils';
 import { Plus, Users, ExternalLink } from 'lucide-react';
-import { archiveTenant } from '@/lib/actions/tenants';
+import { ArchiveButton } from '@/components/admin/ArchiveButton';
 import type { Provider, TenantStatus, Tenant } from '@/lib/types';
 
 const CURRENT_PERIOD = '2026-06-01';
@@ -59,8 +59,6 @@ export default async function ClientsPage() {
     const monthlyUsd = (costs ?? []).filter(c => c.tenant_id === t.id).reduce((s, c) => s + Number(c.amount_usd), 0);
     return { ...(t as Tenant), providers, userCount, monthlyUsd };
   }
-
-  const archiveAction = archiveTenant.bind(null, '');
 
   return (
     <div className="p-6">
@@ -132,15 +130,7 @@ export default async function ClientsPage() {
                         <ExternalLink className="w-3.5 h-3.5" />
                         Ver detalle
                       </Link>
-                      <form action={archiveTenant.bind(null, t.id)}>
-                        <button
-                          type="submit"
-                          className="px-3 py-1.5 rounded-lg border border-line text-xs font-medium text-ink-soft hover:text-bad hover:border-bad transition-colors"
-                          onClick={e => { if (!confirm(`¿Archivar ${t.name}?`)) e.preventDefault(); }}
-                        >
-                          Archivar
-                        </button>
-                      </form>
+                      <ArchiveButton tenantId={t.id} tenantName={t.name} />
                     </div>
                   </td>
                 </tr>
