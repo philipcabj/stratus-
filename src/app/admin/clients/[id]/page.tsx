@@ -133,7 +133,11 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
 
       {/* Tab: Cuentas cloud */}
       {tab === 'connections' && (
-        <ConnectionsTab tenantId={id} connections={connections ?? []} />
+        <ConnectionsTab
+          tenantId={id}
+          connections={connections ?? []}
+          platformAccountId={process.env.AWS_ACCOUNT_ID ?? ''}
+        />
       )}
 
       {/* Tab: Usuarios */}

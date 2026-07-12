@@ -6,6 +6,8 @@ export type UserRole = 'platform_admin' | 'tenant_admin' | 'tenant_viewer';
 export type TenantStatus = 'active' | 'inactive' | 'suspended' | 'archived';
 export type ConnectionStatus = 'connected' | 'error' | 'pending';
 export type ConnectionScope = 'organization' | 'single_account';
+export type ConnectionMode = 'cross_account_role' | 'partner_billing';
+export type SyncStatus = 'success' | 'error' | 'running';
 export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
 
 export interface Tenant {
@@ -30,14 +32,22 @@ export interface Profile {
 
 export interface CloudConnection {
   id: string;
-  tenant_id: string;
+  tenant_id: string | null;    // null solo en modo partner_billing
   provider: Provider;
   display_name: string;
   status: ConnectionStatus;
   scope: ConnectionScope;
+  connection_mode: ConnectionMode;
   provider_account_id: string | null;
   notes: string | null;
   external_ref: string | null;
+  // AWS-specific
+  role_arn: string | null;
+  external_id: string | null;
+  aws_account_id: string | null;
+  last_sync_at: string | null;
+  last_sync_status: SyncStatus | null;
+  last_sync_error: string | null;
   created_at: string;
 }
 

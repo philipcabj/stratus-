@@ -7,15 +7,17 @@ import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ConnectionForm } from '@/components/admin/ConnectionForm';
 import { deleteConnection } from '@/lib/actions/connections';
+import { SyncButton } from '@/components/admin/SyncButton';
 import { Plus, Cable, Pencil, Trash2 } from 'lucide-react';
 import type { CloudConnection, ConnectionStatus, ConnectionScope } from '@/lib/types';
 
 interface Props {
   tenantId: string;
   connections: CloudConnection[];
+  platformAccountId?: string;
 }
 
-export function ConnectionsTab({ tenantId, connections }: Props) {
+export function ConnectionsTab({ tenantId, connections, platformAccountId }: Props) {
   const [showAdd, setShowAdd] = useState(false);
   const [editConn, setEditConn] = useState<CloudConnection | null>(null);
 
@@ -47,7 +49,7 @@ export function ConnectionsTab({ tenantId, connections }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-line">
-                {['Proveedor','Nombre','Alcance','ID de cuenta','Estado','Notas',''].map(h => (
+                {['Proveedor','Nombre','Alcance','ID de cuenta','Estado','Sincronización','Notas',''].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-ink-soft uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -58,9 +60,21 @@ export function ConnectionsTab({ tenantId, connections }: Props) {
                   <td className="px-4 py-3.5"><CloudChip provider={c.provider} /></td>
                   <td className="px-4 py-3.5 font-medium text-ink">{c.display_name}</td>
                   <td className="px-4 py-3.5"><Badge variant={c.scope as ConnectionScope} /></td>
-                  <td className="px-4 py-3.5 font-plex-mono text-xs text-ink-soft">{c.provider_account_id ?? '—'}</td>
+                  <td className="px-4 py-3.5 font-plex-mono text-xs text-ink-soft">{c.provider_account_id ?? c.aws_account_id ?? '—'}</td>
                   <td className="px-4 py-3.5"><Badge variant={c.status as ConnectionStatus} /></td>
-                  <td className="px-4 py-3.5 text-ink-soft text-xs max-w-[180px] truncate">{c.notes ?? '—'}</td>
+                  <td className="px-4 py-3.5">
+                    {c.provider === 'aws' && c.connection_mode === 'cross_account_role' ? (
+                      <SyncButton
+                        connectionId={c.id}
+                        lastSyncAt={c.last_sync_at ?? null}
+                        lastSyncStatus={c.last_sync_status ?? null}
+                        lastSyncError={c.last_sync_error ?? null}
+                      />
+                    ) : (
+                      <span className="text-xs text-ink-soft">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3.5 text-ink-soft text-xs max-w-[160px] truncate">{c.notes ?? '—'}</td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-1">
                       <button onClick={() => setEditConn(c)} className="p-1.5 rounded-lg text-ink-soft hover:text-accent hover:bg-accent/10 transition-colors">
@@ -85,7 +99,7 @@ export function ConnectionsTab({ tenantId, connections }: Props) {
       )}
 
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Agregar cuenta cloud">
-        <ConnectionForm tenantId={tenantId} onSuccess={() => { setShowAdd(false); window.location.reload(); }} />
+        <ConnectionForm tenantId={tenantId} platformAccountId={platformAccountId} onSuccess={() => { setShowAdd(false); window.location.reload(); }} />
       </Modal>
 
       <Modal open={!!editConn} onClose={() => setEditConn(null)} title="Editar conexión">
